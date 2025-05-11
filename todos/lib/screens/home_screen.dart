@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/todo_provider.dart';
+import 'add_task_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   final TextEditingController _controller = TextEditingController();
@@ -10,7 +11,10 @@ class HomeScreen extends StatelessWidget {
     return ChangeNotifierProvider(
       create: (_) => TodoProvider()..loadTodos(),
       child: Scaffold(
-        appBar: AppBar(title: Text('Todo App')),
+        appBar: AppBar(
+          title: Text('Todo App'),
+          backgroundColor: Colors.blueAccent,
+        ),
         body: Consumer<TodoProvider>(
           builder: (context, provider, child) {
             return Column(
@@ -22,11 +26,18 @@ class HomeScreen extends StatelessWidget {
                       Expanded(
                         child: TextField(
                           controller: _controller,
-                          decoration: InputDecoration(labelText: 'New task'),
+                          decoration: InputDecoration(
+                            labelText: 'New task',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(15.0),
+                            ),
+                          ),
                         ),
                       ),
+                      SizedBox(width: 10),
                       IconButton(
                         icon: Icon(Icons.add),
+                        color: Colors.blueAccent,
                         onPressed: () {
                           final title = _controller.text.trim();
                           if (title.isNotEmpty) {
@@ -45,26 +56,62 @@ class HomeScreen extends StatelessWidget {
                       itemCount: provider.todos.length,
                       itemBuilder: (context, index) {
                         final todo = provider.todos[index];
-                        return ListTile(
-                          title: Text(
-                            todo.title,
-                            style: TextStyle(
-                              decoration: todo.completed
-                                  ? TextDecoration.lineThrough
-                                  : TextDecoration.none,
+                        return Card(
+                          margin: EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+                          elevation: 4.0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(15.0),
+                          ),
+                          child: ListTile(
+                            contentPadding: EdgeInsets.all(10),
+                            title: Text(
+                              todo.title,
+                              style: TextStyle(
+                                fontSize: 16,
+                                decoration: todo.completed
+                                    ? TextDecoration.lineThrough
+                                    : TextDecoration.none,
+                                color: todo.completed ? Colors.grey : Colors.black,
+                              ),
                             ),
-                          ),
-                          leading: Checkbox(
-                            value: todo.completed,
-                            onChanged: (_) => provider.toggleComplete(index),
-                          ),
-                          onTap: () => _showEditDialog(context, provider, index, todo.title),
-                          trailing: IconButton(
-                            icon: Icon(Icons.delete),
-                            onPressed: () => provider.deleteTodo(index),
+                            leading: Checkbox(
+                              value: todo.completed,
+                              onChanged: (_) => provider.toggleComplete(index),
+                              activeColor: Colors.blueAccent,
+                            ),
+                            onTap: () => _showEditDialog(context, provider, index, todo.title),
+                            trailing: IconButton(
+                              icon: Icon(Icons.delete, color: Colors.redAccent),
+                              onPressed: () => provider.deleteTodo(index),
+                            ),
                           ),
                         );
                       },
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: ElevatedButton(
+                    onPressed: () async {
+                      final newTaskTitle = await Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => AddTaskScreen()),
+                      );
+                      if (newTaskTitle != null && newTaskTitle.isNotEmpty) {
+                        provider.addTodo(newTaskTitle);
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blueAccent,
+                      padding: EdgeInsets.symmetric(vertical: 12.0, horizontal: 40.0),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30.0),
+                      ),
+                    ),
+                    child: Text(
+                      'Add New Task',
+                      style: TextStyle(fontSize: 16),
                     ),
                   ),
                 )
@@ -82,7 +129,13 @@ class HomeScreen extends StatelessWidget {
       context: context,
       builder: (_) => AlertDialog(
         title: Text('Edit Task'),
-        content: TextField(controller: editController),
+        content: TextField(
+          controller: editController,
+          decoration: InputDecoration(
+            hintText: 'Enter new task title',
+            border: OutlineInputBorder(),
+          ),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
